@@ -15,7 +15,7 @@ public class GitTestServiceApplication {
 	
 	@GetMapping
 	public String greet() {
-		return "git test for me ";
+		return "hureeeeeeeee done!";
 	}
 
 }
