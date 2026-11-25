@@ -4,11 +4,12 @@ pipeline {
 
     tools {
         jdk 'JDK21'
-        maven 'M3'
+        maven 'Maven3'
     }
 
     environment {
-        DOCKER_IMAGE = 'aktiwarigla/git-test-service'
+        DOCKER_IMAGE = 'aktiwari/git-test-service'
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     triggers {
@@ -21,15 +22,19 @@ pipeline {
             steps {
                 echo 'Checking out source code...'
 
-                git branch: 'main',
-                    url: 'https://github.com/aktiwarigla/git-test-service.git'
+                checkout scm
             }
         }
 
         stage('Environment') {
             steps {
+                echo 'Checking development environment...'
+
+                sh 'echo $PATH'
                 sh 'java -version'
                 sh 'mvn -version'
+
+                sh 'which docker'
                 sh 'docker --version'
                 sh 'docker info'
             }
@@ -38,6 +43,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building Spring Boot application...'
+
                 sh 'mvn clean compile'
             }
         }
@@ -45,6 +51,7 @@ pipeline {
         stage('Unit Testing') {
             steps {
                 echo 'Running unit tests...'
+
                 sh 'mvn test'
             }
 
@@ -59,6 +66,7 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Creating executable JAR...'
+
                 sh 'mvn package -DskipTests'
 
                 sh 'ls -lh target/myDokerJar.jar'
@@ -71,15 +79,15 @@ pipeline {
 
                 sh '''
                     docker build \
-                    -t $DOCKER_IMAGE:$BUILD_NUMBER \
-                    -t $DOCKER_IMAGE:latest .
+                        -t $DOCKER_IMAGE:$BUILD_NUMBER \
+                        -t $DOCKER_IMAGE:latest .
                 '''
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                echo 'Pushing image to Docker Hub...'
+                echo 'Pushing Docker image to Docker Hub...'
 
                 withCredentials([
                     usernamePassword(
@@ -90,7 +98,8 @@ pipeline {
                 ]) {
                     sh '''
                         echo "$DOCKER_TOKEN" | docker login \
-                        -u "$DOCKER_USER" --password-stdin
+                            -u "$DOCKER_USER" \
+                            --password-stdin
 
                         docker push $DOCKER_IMAGE:$BUILD_NUMBER
 
@@ -105,11 +114,17 @@ pipeline {
 
     post {
         success {
-            echo 'CI/CD Pipeline completed successfully!'
+            echo 'SUCCESS: CI/CD Pipeline completed successfully!'
+            echo "Docker Image: ${env.DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+            echo "Latest Image: ${env.DOCKER_IMAGE}:latest"
         }
 
         failure {
-            echo 'CI/CD Pipeline failed. Check the console output.'
+            echo 'FAILURE: CI/CD Pipeline failed. Check Console Output.'
+        }
+
+        always {
+            echo 'Jenkins Pipeline execution completed.'
         }
     }
 }
