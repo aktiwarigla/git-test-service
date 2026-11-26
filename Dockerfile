@@ -1,10 +1,10 @@
+
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-
-COPY target/*.jar dockerfile.jar
+COPY target/myDokerJar.jar app.jar
 
 EXPOSE 9191
 
-ENTRYPOINT ["java", "-jar", "dockerfile.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

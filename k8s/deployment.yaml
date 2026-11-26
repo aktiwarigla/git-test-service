@@ -1,0 +1,29 @@
+
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: git-test-service
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: git-test-service
+
+  template:
+    metadata:
+      labels:
+        app: git-test-service
+
+    spec:
+      containers:
+        - name: git-test-service-container
+
+          image: aktiwarigla/git-test-service:latest
+
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 9191
